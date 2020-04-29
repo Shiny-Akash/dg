@@ -1,18 +1,21 @@
 '''dg - Dataset Generator'''
 import os 
 
-class DataSetGenerator :
-	name = "Dataset"
-	def __init__(self ,save_path) :
-		self.save_path = save_path
-		if not os.path.exists(self.save_path):
-			os.makedir(self.save_path)
+class DataSetGenerator:
+	def __init__(self):
+		self.make_path()
+		
+	def make_path(self):
+		folders = ['dataset/csv/','dataset/images/']
+		for folder in folders:
+			if not os.path.exists(folder):
+				os.makedirs(folder)
 
 class PlainSet(DataSetGenerator):
-	def __init__(self,save_path,count
-				,bg=False,) :
+	def __init__(self,count,bg=None):
 		self.count = count
 		self.bg = bg
-		super().__init__(save_path)
+		super().__init__()
 
-	
+if __name__ == "__main__":
+	plain = PlainSet(10)
