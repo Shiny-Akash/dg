@@ -45,9 +45,14 @@ class DataSetGenerator:
 			self.ids.append(id_)
 			self.paths.append(
 				f"{self.name}/images/{id_}.jpg")
-			rand_colour = [random.randint(0,255) 
-							for _ in range(3)]
-			self.bgs.append(rand_colour)
+			if not self.bg :
+				bg = [random.randint(0,255) 
+						for _ in range(3)]
+			elif len(self.bg) != 1 :
+				bg = random.sample(self.bg,1)
+			else :
+				bg = self.bg 
+			self.bgs.append(bg)
 
 	def create_json(self):
 		"""create json file to store ids,paths and bgs"""
@@ -89,6 +94,7 @@ class PlainSet(DataSetGenerator):
 			plain = plain*bg
 			return plain
 
-plain = PlainSet('akash')
+bgs = [(255,255,0),(255,255,255),(0,255,255),(0,255,0),(0,0,0)]
+plain = PlainSet('dataset',bgs)
 plain.cleanup()
-#plain.generate(size=(200,200) ,count=1)
+plain.generate(size=(200,200) ,count=10)
