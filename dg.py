@@ -17,6 +17,7 @@ class DataSetGenerator:
 		has to initialized for every dataset
 		class .
 		"""
+		self.name = ""
 		self.ids = []
 		self.paths = []
 		self.bgs = []
@@ -32,7 +33,7 @@ class DataSetGenerator:
 		create default directories for storing the
 		dataset csv file and the images .
 		"""
-		folders = ['dataset/json/','dataset/images/']
+		folders = [f'{self.name}/json/',f'{self.name}/images/']
 		for folder in folders:
 			if not os.path.exists(folder):
 				os.makedirs(folder)
@@ -43,7 +44,7 @@ class DataSetGenerator:
 			id_ = random.randint(10000,99999)
 			self.ids.append(id_)
 			self.paths.append(
-				f"dataset/images/{id_}.jpg")
+				f"{self.name}/images/{id_}.jpg")
 			rand_colour = [random.randint(0,255) 
 							for _ in range(3)]
 			self.bgs.append(rand_colour)
@@ -53,19 +54,20 @@ class DataSetGenerator:
 		data = {'image_id':self.ids,
 				'paths':self.paths,
 				'bgs':self.bgs}
-		with open('dataset/json/images_info.json','w')as f:
+		with open(f'{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
 
 	def cleanup(self):
 		"""delete already existing dataset"""
-		if os.path.exists('dataset'):
-			shutil.rmtree('dataset')
+		if os.path.exists(f'{self.name}'):
+			shutil.rmtree(f'{self.name}')
 
 class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
-	def __init__(self,bg=None):
-		self.bg = bg
+	def __init__(self,name,bg=None):
 		super().__init__()
+		self.name = name 
+		self.bg = bg
 
 	def generate(self,size,count,channels=3):
 		"""
@@ -84,10 +86,9 @@ class PlainSet(DataSetGenerator):
 			"""the actual image generator"""
 			(h,w),c = self.size,self.channels
 			plain = np.ones((h,w,c),dtype=np.uint8)
-			
 			plain = plain*bg
 			return plain
 
-plain = PlainSet()
+plain = PlainSet('akash')
 plain.cleanup()
-plain.generate(size=(200,200) ,count=1)
+#plain.generate(size=(200,200) ,count=1)
