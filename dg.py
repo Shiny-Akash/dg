@@ -11,16 +11,21 @@ class DataSetGenerator:
 	this is the main class from which many
 	subclasses are derived .
 	"""
-	def __init__(self):
+	def __init__(self,name):
 		"""
 		basic attributes and functions that
 		has to initialized for every dataset
 		class .
 		"""
-		self.name = ""
+		self.name = name
 		self.ids = []
 		self.paths = []
 		self.bgs = []
+
+	def __getitem__(self,idx):
+		return {'image_id': self.ids[idx],
+				'path':self.paths[idx],
+				'bg':self.bgs[idx]}
 		
 	def generate(self):
 		"""call general functions for data generation"""
@@ -39,26 +44,18 @@ class DataSetGenerator:
 				os.makedirs(folder)
 
 	def create_list(self):
-		"""create image ids ,paths and backgrounds""" 
+		"""create image ids and paths .""" 
 		for i in range(self.count):
 			id_ = random.randint(10000,99999)
 			self.ids.append(id_)
 			self.paths.append(
 				f"{self.name}/images/{id_}.jpg")
-			if not self.bg :
-				bg = [random.randint(0,255) 
-						for _ in range(self.channels)]
-			elif len(self.bg) != 1 :
-				bg = random.sample(self.bg,1)
-			else :
-				bg = self.bg 
-			self.bgs.append(bg)
 
 	def create_json(self):
 		"""create json file to store ids,paths and bgs"""
 		data = {'image_id':self.ids,
-				'paths':self.paths,
-				'bgs':self.bgs}
+				'path':self.paths,
+				'bg':self.bgs}
 		with open(f'{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
 
@@ -70,8 +67,8 @@ class DataSetGenerator:
 class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
 	def __init__(self,name,bg=None):
-		super().__init__()
-		self.name = name 
+		super().__init__(name)
+		print("happenning",bg)
 		self.bg = bg
 
 	def generate(self,size,count,channels=3):
@@ -87,9 +84,48 @@ class PlainSet(DataSetGenerator):
 			img = self.gen(bg)
 			cv2.imwrite(path,img)
 
+	def create_list(self):
+		"""
+		handle the backgrounds specific for 
+		PlainSet .
+		"""
+		super().create_list()
+		if not self.bg :
+			bg = [random.randint(0,255) 
+						for _ in range(self.channels)]
+		elif len(self.bg) != 1 :
+			bg = random.sample(self.bg,1)
+		else :
+			bg = self.bg 
+		self.bgs.append(bg)
+
 	def gen(self,bg):
 			"""the actual image generator"""
 			(h,w),c = self.size,self.channels
 			plain = np.ones((h,w,c),dtype=np.uint8)
 			plain = plain*bg
-			return plai
+			return plain
+
+class ObjectSet(DataSetGenerator):
+	"""
+	common class for both object over plainset 
+	and object over some backgrounds
+	"""
+	def __init__(self,name,obj,bg=None):
+		"""get the object image"""
+		#add bg to the arguement bcoz of mro
+		super().__init__(name,bg=bg)
+		self.object = obj
+
+class ObjectOverPlainSet(ObjectSet,PlainSet):
+	"""object over plain images ."""
+	#so inherited both objectset and plainset .  
+	def __init__(self,name,obj,bg=None):
+		"""
+		get the object as well as colour of 
+		the plain image if given
+		"""
+		super().__init__(name,obj,bg=bg)
+
+print(ObjectOverPlainSet.mro())
+ob = ObjectOverPlainSet("dataset",'object')
