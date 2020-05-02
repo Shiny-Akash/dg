@@ -47,7 +47,7 @@ class DataSetGenerator:
 				f"{self.name}/images/{id_}.jpg")
 			if not self.bg :
 				bg = [random.randint(0,255) 
-						for _ in range(3)]
+						for _ in range(self.channels)]
 			elif len(self.bg) != 1 :
 				bg = random.sample(self.bg,1)
 			else :
@@ -92,9 +92,4 @@ class PlainSet(DataSetGenerator):
 			(h,w),c = self.size,self.channels
 			plain = np.ones((h,w,c),dtype=np.uint8)
 			plain = plain*bg
-			return plain
-
-bgs = [(255,255,0),(255,255,255),(0,255,255),(0,255,0),(0,0,0)]
-plain = PlainSet('dataset',bgs)
-plain.cleanup()
-plain.generate(size=(200,200) ,count=10)
+			return plai
