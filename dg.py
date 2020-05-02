@@ -56,6 +56,8 @@ class DataSetGenerator:
 		data = {'image_id':self.ids,
 				'path':self.paths,
 				'bg':self.bgs}
+		if hasattr(self,'bbox'):
+			data['bbox'] = self.bbox
 		with open(f'{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
 
@@ -63,6 +65,7 @@ class DataSetGenerator:
 		"""delete already existing dataset"""
 		if os.path.exists(f'{self.name}'):
 			shutil.rmtree(f'{self.name}')
+
 
 class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
@@ -75,11 +78,20 @@ class PlainSet(DataSetGenerator):
 		generate images and return the list of 
 		ids , paths ,etc (dataset obj)
 		"""
-		self.size = size
+		self.h,self.w = size
 		self.count = count
 		self.channels = channels
 		super().generate()
 		self.gen()
+
+	def gen(self):
+			"""the private image generator"""
+			c = self.channels
+			for path,bg in zip(self.paths,self.bgs):
+				plain = np.ones((self.h,self.w,c),
+								dtype=np.uint8)
+				plain = plain*bg
+				cv2.imwrite(path,plain)
 
 	def create_list(self):
 		"""
@@ -97,13 +109,6 @@ class PlainSet(DataSetGenerator):
 				bg = self.bg 
 			self.bgs.append(bg)
 
-	def gen(self):
-			"""the actual image generator"""
-			(h,w),c = self.size,self.channels
-			for path,bg in zip(self.paths,self.bgs):
-				plain = np.ones((h,w,c),dtype=np.uint8)
-				plain = plain*bg
-				cv2.imwrite(path,plain)
 
 class ObjectSet(DataSetGenerator):
 	"""
@@ -114,7 +119,10 @@ class ObjectSet(DataSetGenerator):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
 		super().__init__(name,bg=bg)
+		obj = cv2.imread(obj)
 		self.object = obj
+		self.bbox = []
+
 
 class ObjectOverPlainSet(ObjectSet,PlainSet):
 	"""object over plain images ."""
@@ -126,7 +134,15 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		"""
 		super().__init__(name,obj,bg=bg)
 
+	def create_list(self):
+		super().create_list()
+		h,w,c = self.object.shape
+		for _ in range(self.count):
+			x = random.randrange(0,self.w-w)
+			y = random.randrange(0,self.h-h)
+			self.bbox.append([x,y,w,h])
 
-ob = ObjectOverPlainSet("dataset",'object')
+
+ob = ObjectOverPlainSet("dataset",'skystone.png')
 ob.cleanup()
-ob.generate((500,500),10)
+ob.generate((1000,1000),10)
