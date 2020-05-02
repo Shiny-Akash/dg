@@ -45,7 +45,7 @@ class DataSetGenerator:
 
 	def create_list(self):
 		"""create image ids and paths .""" 
-		for i in range(self.count):
+		for _ in range(self.count):
 			id_ = random.randint(10000,99999)
 			self.ids.append(id_)
 			self.paths.append(
@@ -68,7 +68,6 @@ class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
 	def __init__(self,name,bg=None):
 		super().__init__(name)
-		print("happenning",bg)
 		self.bg = bg
 
 	def generate(self,size,count,channels=3):
@@ -80,9 +79,7 @@ class PlainSet(DataSetGenerator):
 		self.count = count
 		self.channels = channels
 		super().generate()
-		for path,bg in zip(self.paths,self.bgs):
-			img = self.gen(bg)
-			cv2.imwrite(path,img)
+		self.gen()
 
 	def create_list(self):
 		"""
@@ -90,21 +87,23 @@ class PlainSet(DataSetGenerator):
 		PlainSet .
 		"""
 		super().create_list()
-		if not self.bg :
-			bg = [random.randint(0,255) 
-						for _ in range(self.channels)]
-		elif len(self.bg) != 1 :
-			bg = random.sample(self.bg,1)
-		else :
-			bg = self.bg 
-		self.bgs.append(bg)
+		for _ in range(self.count):
+			if not self.bg :
+				bg = [random.randint(0,255) 
+							for _ in range(self.channels)]
+			elif len(self.bg) != 1 :
+				bg = random.sample(self.bg,1)
+			else :
+				bg = self.bg 
+			self.bgs.append(bg)
 
-	def gen(self,bg):
+	def gen(self):
 			"""the actual image generator"""
 			(h,w),c = self.size,self.channels
-			plain = np.ones((h,w,c),dtype=np.uint8)
-			plain = plain*bg
-			return plain
+			for path,bg in zip(self.paths,self.bgs):
+				plain = np.ones((h,w,c),dtype=np.uint8)
+				plain = plain*bg
+				cv2.imwrite(path,plain)
 
 class ObjectSet(DataSetGenerator):
 	"""
@@ -127,5 +126,7 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		"""
 		super().__init__(name,obj,bg=bg)
 
-print(ObjectOverPlainSet.mro())
+
 ob = ObjectOverPlainSet("dataset",'object')
+ob.cleanup()
+ob.generate((500,500),10)
