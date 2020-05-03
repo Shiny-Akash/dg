@@ -155,6 +155,7 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 	#so inherited both objectset and plainset
 
 	def create_list(self):
+		"""create a list of bbox"""
 		super().create_list()
 		self.create_bbox()
 
@@ -169,7 +170,7 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 			yield path,plain,mask
 
 
-ob = ObjectOverPlainSet("dataset",'cursor.png',
+ob = ObjectOverPlainSet("dataset",'src/cursor.png',
 						[(0,0,255),(0,255,255)])
 ob.cleanup()
 ob.generate((1000,1000),10)
