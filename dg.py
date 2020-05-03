@@ -27,6 +27,8 @@ class DataSetGenerator:
 		self.make_path()
 		self.create_list()
 		self.create_json()
+		for path,img in self.gen():
+			cv2.imwrite(path,img)
 
 	def make_path(self):
 		"""
@@ -77,8 +79,6 @@ class PlainSet(DataSetGenerator):
 		self.count = count
 		self.channels = channels
 		super().generate()
-		for path,img in self.gen():
-			cv2.imwrite(path,img)
 
 	def gen(self):
 			"""generate images and return path ,img"""
@@ -114,8 +114,13 @@ class ObjectSet(DataSetGenerator):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
 		super().__init__(name,bg=bg)
-		obj = cv2.imread(obj)
+		obj = cv2.imread(obj,-1)
 		self.object = obj
+		if obj.shape[2] == 4 :
+			self.alpha = obj[:,:,3]
+		else :
+			self.alpha = np.ones(obj.shape[:2],
+						dtype=np.uint8)*255
 		self.bbox = []
 
 	def create_list(self):
@@ -129,6 +134,23 @@ class ObjectSet(DataSetGenerator):
 			y = random.randrange(0,self.h-h)
 			self.bbox.append([x,y,w,h])
 
+	def alpha_blend(self,img,bbox):
+		x,y,w,h, = bbox
+		img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
+		print(img)
+		mask = np.zeros((self.h,self.w),
+						dtype=np.uint8)
+		mask[x:x+w,y:y+h] = self.alpha
+		img[:,:,3] = mask
+		print(np.unique(img))
+		for i in range(0,3):
+			img[x:x+w,y:y+h,i] = (img[x:x+w,y:y+h,i]
+								* (1-self.alpha/255.0)
+								+ self.object[:,:,i]
+								* self.alpha/255.0)
+		print(img)
+		return img
+
 
 class ObjectOverPlainSet(ObjectSet,PlainSet):
 	"""object over plain images ."""
@@ -141,21 +163,22 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		super().__init__(name,obj,bg=bg)
 
 	def gen(self):
-		for (x,y,w,h),(path,plain) in zip(self.bbox,
-									super().gen()):
-			plain[x:x+w,y:y+h] = self.object
-			plain = cv2.cvtColor(plain,cv2.COLOR_RGB2RGBA)
-			mask = np.zeros((self.h,self.w),
-							dtype=np.uint8)
-			mask[x:x+w,y:y+h] = 255
-			plain[:,:,3] = mask
+		for bbox,(path,plain) in zip(self.bbox,
+								super().gen()):
+			#plain[x:x+w,y:y+h] = self.object
+			#plain = cv2.cvtColor(plain,cv2.COLOR_RGB2RGBA)
+			#mask = np.zeros((self.h,self.w),
+			#				dtype=np.uint8)
+			#mask[x:x+w,y:y+h] = 255
+			#plain[:,:,3] = mask
+			plain = self.alpha_blend(plain,bbox)
 			yield path,plain
 
 
 ob = ObjectOverPlainSet("dataset",'skystone.png',
 						[(0,0,0),(255,255,255)])
 ob.cleanup()
-ob.generate((1000,1000),10)
+ob.generate((1000,1000),1)
 
 img =  cv2.imread(ob.img_paths[0],-1)
 print(img.shape)
