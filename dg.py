@@ -22,20 +22,31 @@ class DataSetGenerator:
 		self.img_paths = []
 		self.bgs = []
 		
-	def generate(self):
+	def generate(self,size,count,
+				channels=3):
 		"""call general functions for data generation"""
+		self.h,self.w = size
+		self.count = count
+		self.channels = channels
 		self.make_path()
 		self.create_list()
 		self.create_json()
-		for path,img in self.gen():
+		for path,img,mask in self.gen():
 			cv2.imwrite(path,img)
+			if mask.any() :
+				*p,id_=path.split('/')
+				cv2.imwrite(f"{self.name}/masks/{id_}",
+							mask)
 
 	def make_path(self):
 		"""
 		create default directories for storing the
 		dataset csv file and the images .
 		"""
-		folders = [f'{self.name}/json/',f'{self.name}/images/']
+		folders = [f'{self.name}/json/',
+					f'{self.name}/images/']
+		if hasattr(self,'masks'):
+			folders.append(f'{self.name}/masks/')
 		for folder in folders:
 			if not os.path.exists(folder):
 				os.makedirs(folder)
@@ -47,6 +58,9 @@ class DataSetGenerator:
 			self.ids.append(id_)
 			self.img_paths.append(
 				f"{self.name}/images/{id_}.png")
+			if hasattr(self,'masks'):
+				self.masks.append(
+				f"{self.name}/masks/{id_}.png")
 
 	def create_json(self):
 		"""create json file to store ids,paths and bgs"""
@@ -54,6 +68,7 @@ class DataSetGenerator:
 				'img_path':self.img_paths,
 				'bg':self.bgs}
 		if hasattr(self,'bbox'):
+			data['masks'] = self.masks
 			data['bbox'] = self.bbox
 		with open(f'{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
@@ -70,23 +85,13 @@ class PlainSet(DataSetGenerator):
 		super().__init__(name)
 		self.bg = bg
 
-	def generate(self,size,count,channels=3):
-		"""
-		generate images and return the list of 
-		ids , paths ,etc (dataset obj)
-		"""
-		self.h,self.w = size
-		self.count = count
-		self.channels = channels
-		super().generate()
-
 	def gen(self):
 			"""generate images and return path ,img"""
 			c = self.channels
 			for path,bg in zip(self.img_paths,self.bgs):
 				plain = np.ones((self.h,self.w,c),
 								dtype=np.uint8)
-				yield path,(plain*bg).astype(np.uint8)
+				yield path,(plain*bg).astype(np.uint8),None
 
 	def create_list(self):
 		"""
@@ -122,12 +127,10 @@ class ObjectSet(DataSetGenerator):
 			self.alpha = np.ones(obj.shape[:2],
 						dtype=np.uint8)*255
 		self.bbox = []
+		self.masks = []
 
-	def create_list(self):
-		"""
-		add bbox attribute to the list 
-		"""
-		super().create_list()
+	def create_bbox(self):
+		"""create bbox list"""
 		h,w,c = self.object.shape
 		for _ in range(self.count):
 			x = random.randrange(0,self.w-w)
@@ -136,40 +139,37 @@ class ObjectSet(DataSetGenerator):
 
 	def alpha_blend(self,img,bbox):
 		"""do alpha blending"""
-		x,y,w,h, = bbox
+		x,y,w,h = bbox
 		for i in range(0,3):
-			img[x:x+w,y:y+h,i] = (img[x:x+w,y:y+h,i]
+			img[y:y+h,x:x+w,i] = (img[y:y+h,x:x+w,i]
 								* (1-self.alpha/255.0)
 								+ self.object[:,:,i]
 								* (self.alpha/255.0))
-		return img
+		mask = np.zeros((self.h,self.w),dtype=np.uint8)
+		mask[y:y+h,x:x+w] = self.alpha/255
+		return img,mask
 
 
 class ObjectOverPlainSet(ObjectSet,PlainSet):
 	"""object over plain images ."""
-	#so inherited both objectset and plainset .  
-	def __init__(self,name,obj,bg=None):
-		"""
-		get the object as well as colour of 
-		the plain image if given
-		"""
-		super().__init__(name,obj,bg=bg)
+	#so inherited both objectset and plainset
+
+	def create_list(self):
+		super().create_list()
+		self.create_bbox()
 
 	def gen(self):
 		"""
 		call plainimage generator and return 
 		the alpha blended image
 		"""
-		for bbox,(path,plain) in zip(self.bbox,
+		for bbox,(path,plain,_) in zip(self.bbox,
 								super().gen()):
-			plain = self.alpha_blend(plain,bbox)
-			yield path,plain
+			plain,mask = self.alpha_blend(plain,bbox)
+			yield path,plain,mask
 
 
-ob = ObjectOverPlainSet("dataset",'skystone.png',
-						[(0,0,0),(255,255,255)])
+ob = ObjectOverPlainSet("dataset",'cursor.png',
+						[(0,0,255),(0,255,255)])
 ob.cleanup()
-ob.generate((1000,1000),1)
-
-img =  cv2.imread(ob.img_paths[0],-1)
-print(img.shape)
+ob.generate((1000,1000),10)
