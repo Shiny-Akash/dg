@@ -135,20 +135,13 @@ class ObjectSet(DataSetGenerator):
 			self.bbox.append([x,y,w,h])
 
 	def alpha_blend(self,img,bbox):
+		"""do alpha blending"""
 		x,y,w,h, = bbox
-		img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
-		print(img)
-		mask = np.zeros((self.h,self.w),
-						dtype=np.uint8)
-		mask[x:x+w,y:y+h] = self.alpha
-		img[:,:,3] = mask
-		print(np.unique(img))
 		for i in range(0,3):
 			img[x:x+w,y:y+h,i] = (img[x:x+w,y:y+h,i]
 								* (1-self.alpha/255.0)
 								+ self.object[:,:,i]
-								* self.alpha/255.0)
-		print(img)
+								* (self.alpha/255.0))
 		return img
 
 
@@ -163,14 +156,12 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		super().__init__(name,obj,bg=bg)
 
 	def gen(self):
+		"""
+		call plainimage generator and return 
+		the alpha blended image
+		"""
 		for bbox,(path,plain) in zip(self.bbox,
 								super().gen()):
-			#plain[x:x+w,y:y+h] = self.object
-			#plain = cv2.cvtColor(plain,cv2.COLOR_RGB2RGBA)
-			#mask = np.zeros((self.h,self.w),
-			#				dtype=np.uint8)
-			#mask[x:x+w,y:y+h] = 255
-			#plain[:,:,3] = mask
 			plain = self.alpha_blend(plain,bbox)
 			yield path,plain
 
