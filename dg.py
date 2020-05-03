@@ -99,12 +99,12 @@ class PlainSet(DataSetGenerator):
 		PlainSet .
 		"""
 		super().create_list()
-		for _ in range(self.count):
+		for i in range(self.count):
 			if not self.bg :
 				bg = [random.randint(0,255) 
 					for _ in range(self.channels)]
 			elif len(self.bg) != 1 :
-				bg = random.sample(self.bg,1)
+				bg = self.bg[i%len(self.bg)]
 			else :
 				bg = self.bg 
 			self.bgs.append(bg)
@@ -171,6 +171,6 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 ob = ObjectOverPlainSet("dataset",'src/cursor.png',
-						[(0,0,255),(0,255,255)])
+						[(255,0,255),(0,255,255)])
 ob.cleanup()
-ob.generate((1000,1000),10)
+ob.generate((1000,1000),2)
