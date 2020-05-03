@@ -25,6 +25,7 @@ class DataSetGenerator:
 	def generate(self,size,count,
 				channels=3):
 		"""call general functions for data generation"""
+		self.size = size
 		self.h,self.w = size
 		self.count = count
 		self.channels = channels
@@ -129,8 +130,9 @@ class ObjectSet(DataSetGenerator):
 		self.bbox = []
 		self.masks = []
 
-	def create_bbox(self):
+	def create_list(self):
 		"""create bbox list"""
+		super().create_list()
 		h,w,c = self.object.shape
 		for _ in range(self.count):
 			x = random.randrange(0,self.w-w)
@@ -140,6 +142,7 @@ class ObjectSet(DataSetGenerator):
 	def alpha_blend(self,img,bbox):
 		"""do alpha blending"""
 		x,y,w,h = bbox
+		img = cv2.resize(img,(self.size))
 		for i in range(0,3):
 			img[y:y+h,x:x+w,i] = (img[y:y+h,x:x+w,i]
 								* (1-self.alpha/255.0)
@@ -154,11 +157,6 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 	"""object over plain images ."""
 	#so inherited both objectset and plainset
 
-	def create_list(self):
-		"""create a list of bbox"""
-		super().create_list()
-		self.create_bbox()
-
 	def gen(self):
 		"""
 		call plainimage generator and return 
@@ -171,15 +169,36 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 class ObjectOverBackgroundSet(ObjectSet):
-	def __init__(self,name,obj,bg,
-							bg_colour=None):
+	def __init__(self,name,obj,bg):
 		"""get the background """
-		self.background = bg
-		super().__init__(name,obj,
-							bg_colour=bg_colour)
+		super().__init__(name,obj)
+		self.bg = bg
+		if isinstance(bg,str):
+			self.background = [cv2.imread(bg)]
+		else :
+			self.background = []
+			for img in bg:
+				self.background.append(cv2.imread(img))
+
+	def create_list(self):
+		"""create a background list"""
+		super().create_list()
+		for i in range(self.count):
+			self.bgs.append(i%len(self.background))
+
+	def gen(self):
+		"""
+		return alpha blended image for every 
+		background image.
+		"""
+		for path,img,bbox in zip(self.img_paths,
+									self.background,
+									self.bbox):
+			img,mask = self.alpha_blend(img,bbox)
+			yield path,img,mask
 
 
 ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
-							[(255,0,255),(0,255,255)])
+				['src/skystone.png','src/background.jpg'])
 ob.cleanup()
-ob.generate((1000,1000),2)
+ob.generate((500,500),10)
