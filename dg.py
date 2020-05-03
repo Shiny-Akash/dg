@@ -82,16 +82,16 @@ class PlainSet(DataSetGenerator):
 		self.count = count
 		self.channels = channels
 		super().generate()
-		self.gen()
+		for path,img in self.gen():
+			cv2.imwrite(path,img)
 
 	def gen(self):
-			"""the private image generator"""
+			"""generate images and return path ,img"""
 			c = self.channels
 			for path,bg in zip(self.paths,self.bgs):
 				plain = np.ones((self.h,self.w,c),
 								dtype=np.uint8)
-				plain = plain*bg
-				cv2.imwrite(path,plain)
+				yield path,plain*bg
 
 	def create_list(self):
 		"""
@@ -102,7 +102,7 @@ class PlainSet(DataSetGenerator):
 		for _ in range(self.count):
 			if not self.bg :
 				bg = [random.randint(0,255) 
-							for _ in range(self.channels)]
+					for _ in range(self.channels)]
 			elif len(self.bg) != 1 :
 				bg = random.sample(self.bg,1)
 			else :
@@ -135,12 +135,20 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		super().__init__(name,obj,bg=bg)
 
 	def create_list(self):
+		"""
+		add bbox attribute to the list 
+		"""
 		super().create_list()
 		h,w,c = self.object.shape
 		for _ in range(self.count):
 			x = random.randrange(0,self.w-w)
 			y = random.randrange(0,self.h-h)
 			self.bbox.append([x,y,w,h])
+
+	def gen(self):
+		for (x,y,w,h),(path,plain) in zip(self.bbox,super().gen()):
+			plain[x:x+w,y:y+h] = self.object
+			yield path,plain
 
 
 ob = ObjectOverPlainSet("dataset",'skystone.png')
