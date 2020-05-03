@@ -11,7 +11,7 @@ class DataSetGenerator:
 	this is the main class from which many
 	subclasses are derived .
 	"""
-	def __init__(self,name):
+	def __init__(self,name,bg_colour=None):
 		"""
 		basic attributes and functions that
 		has to initialized for every dataset
@@ -81,9 +81,9 @@ class DataSetGenerator:
 
 class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
-	def __init__(self,name,bg=None):
+	def __init__(self,name,bg_colour=None):
 		super().__init__(name)
-		self.bg = bg
+		self.bg = bg_colour
 
 	def gen(self):
 			"""generate images and return path ,img"""
@@ -115,10 +115,10 @@ class ObjectSet(DataSetGenerator):
 	common class for both object over plainset 
 	and object over some backgrounds
 	"""
-	def __init__(self,name,obj,bg=None):
+	def __init__(self,name,obj,bg_colour=None):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
-		super().__init__(name,bg=bg)
+		super().__init__(name,bg_colour=bg_colour)
 		obj = cv2.imread(obj,-1)
 		self.object = obj
 		if obj.shape[2] == 4 :
@@ -170,7 +170,16 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 			yield path,plain,mask
 
 
-ob = ObjectOverPlainSet("dataset",'src/cursor.png',
-						[(255,0,255),(0,255,255)])
+class ObjectOverBackgroundSet(ObjectSet):
+	def __init__(self,name,obj,bg,
+							bg_colour=None):
+		"""get the background """
+		self.background = bg
+		super().__init__(name,obj,
+							bg_colour=bg_colour)
+
+
+ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
+							[(255,0,255),(0,255,255)])
 ob.cleanup()
 ob.generate((1000,1000),2)
