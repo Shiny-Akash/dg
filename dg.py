@@ -151,13 +151,15 @@ class ObjectSet(DataSetGenerator):
 								* (1-self.alpha/255.0)
 								+ self.object[:,:,i]
 								* (self.alpha/255.0))
-		mask = np.zeros((self.h,self.w),dtype=np.uint8)
-		mask[y:y+h,x:x+w] = self.alpha/255
+		mask = np.zeros((3,self.h,self.w),dtype=np.uint8)
+		mask[1,y:y+h,x:x+w] = self.alpha/255
+		mask[0] = cv2.bitwise_not(mask[1])/255
+		mask = mask.transpose((1,2,0))
 		return img,mask
 
 
 class ObjectOverPlainSet(ObjectSet,PlainSet):
-	"""object over plain images ."""
+	"""object over plain images  ."""
 	#so inherited both objectset and plainset
 
 	def gen(self):
