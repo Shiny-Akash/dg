@@ -116,11 +116,14 @@ class ObjectSet(DataSetGenerator):
 	common class for both object over plainset 
 	and object over some backgrounds
 	"""
-	def __init__(self,name,obj,bg_colour=None):
+	def __init__(self,name,obj,resize=None,
+							bg_colour=None):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
 		super().__init__(name,bg_colour=bg_colour)
 		obj = cv2.imread(obj,-1)
+		if resize :
+			obj = cv2.resize(obj,resize)
 		self.object = obj
 		if obj.shape[2] == 4 :
 			self.alpha = obj[:,:,3]
@@ -142,7 +145,7 @@ class ObjectSet(DataSetGenerator):
 	def alpha_blend(self,img,bbox):
 		"""do alpha blending"""
 		x,y,w,h = bbox
-		img = cv2.resize(img,(self.size))
+		img = cv2.resize(img,self.size)
 		for i in range(0,3):
 			img[y:y+h,x:x+w,i] = (img[y:y+h,x:x+w,i]
 								* (1-self.alpha/255.0)
@@ -169,9 +172,9 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 class ObjectOverBackgroundSet(ObjectSet):
-	def __init__(self,name,obj,bg):
+	def __init__(self,name,obj,bg,resize=None):
 		"""get the background """
-		super().__init__(name,obj)
+		super().__init__(name,obj,resize=resize)
 		self.bg = bg
 		if isinstance(bg,str):
 			self.background = [cv2.imread(bg)]
@@ -191,14 +194,16 @@ class ObjectOverBackgroundSet(ObjectSet):
 		return alpha blended image for every 
 		background image.
 		"""
-		for path,img,bbox in zip(self.img_paths,
-									self.background,
+		for path,bg_idx,bbox in zip(self.img_paths,
+									self.bgs,
 									self.bbox):
+			img = self.background[bg_idx]
 			img,mask = self.alpha_blend(img,bbox)
 			yield path,img,mask
 
 
 ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
-				['src/skystone.png','src/background.jpg'])
+				['src/skystone.png','src/background.jpg'],
+				resize=(20,20))
 ob.cleanup()
 ob.generate((500,500),10)
