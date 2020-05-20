@@ -1,0 +1,9 @@
+##
+
+Adding Multiple Objects to a single image is one thing, 
+Using Multiple Objects but placing only one object per 
+image is another thing . the latter can be done by some
+modifications to the existing classes . But the former 
+requires a new class I think .
+
+##
