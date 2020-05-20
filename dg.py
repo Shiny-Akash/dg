@@ -203,9 +203,9 @@ class ObjectOverBackgroundSet(ObjectSet):
 			img,mask = self.alpha_blend(img,bbox)
 			yield path,img,mask
 
-
-ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
-				['src/skystone.png','src/background.jpg'],
-				resize=(20,20))
-ob.cleanup()
-ob.generate((500,500),10)
+if __name__ == '__main__':
+	ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
+					['src/skystone.png','src/background.jpg'],
+					resize=(20,20))
+	ob.cleanup()
+	ob.generate((500,500),10)
