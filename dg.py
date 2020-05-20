@@ -121,38 +121,47 @@ class ObjectSet(DataSetGenerator):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
 		super().__init__(name,bg_colour=bg_colour)
-		obj = cv2.imread(obj,-1)
-		if resize :
-			obj = cv2.resize(obj,resize)
-		self.object = obj
-		if obj.shape[2] == 4 :
-			self.alpha = obj[:,:,3]
-		else :
-			self.alpha = np.ones(obj.shape[:2],
-						dtype=np.uint8)*255
+		if isinstance(obj,str):
+			self.objects = [cv2.imread(obj,-1)]
+		else:
+			self.objects = [cv2.imread(ob,-1)for ob in obj]
+		self.alphas = []
+		for i in range(len(self.objects)):
+			if resize :
+				self.objects[i] = cv2.resize(self.objects[i],resize)
+			ob = self.objects[i]
+			if ob.shape[2] == 4 :
+				alpha = ob[:,:,3]
+			else :
+				alpha = np.ones(ob.shape[:2],
+							dtype=np.uint8)*255	
+			self.alphas.append(alpha)
 		self.bbox = []
 		self.masks = []
 
 	def create_list(self):
 		"""create bbox list"""
 		super().create_list()
-		h,w,c = self.object.shape
-		for _ in range(self.count):
-			x = random.randrange(0,self.w-w)
-			y = random.randrange(0,self.h-h)
-			self.bbox.append([x,y,w,h])
+		for i in range(self.count):
+			box = []
+			for ob in self.objects:
+				h,w,c = ob.shape
+				x = random.randrange(0,self.w-w)
+				y = random.randrange(0,self.h-h)
+				box.append([x,y,w,h])
+			self.bbox.append(box)
 
-	def alpha_blend(self,img,bbox):
+	def alpha_blend(self,img,obj,bbox,alpha):
 		"""do alpha blending"""
 		x,y,w,h = bbox
 		img = cv2.resize(img,self.size)
 		for i in range(0,3):
 			img[y:y+h,x:x+w,i] = (img[y:y+h,x:x+w,i]
-								* (1-self.alpha/255.0)
-								+ self.object[:,:,i]
-								* (self.alpha/255.0))
+								* (1-alpha/255.0)
+								+ obj[:,:,i]
+								* (alpha/255.0))
 		mask = np.zeros((3,self.h,self.w),dtype=np.uint8)
-		mask[1,y:y+h,x:x+w] = self.alpha/255
+		mask[1,y:y+h,x:x+w] = alpha/255
 		mask[0] = cv2.bitwise_not(mask[1])/255
 		mask = mask.transpose((1,2,0))
 		return img,mask
@@ -169,7 +178,8 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 		"""
 		for bbox,(path,plain,_) in zip(self.bbox,
 								super().gen()):
-			plain,mask = self.alpha_blend(plain,bbox)
+			for alpha,obj,box in zip(self.alphas,self.objects,bbox):
+				plain,mask = self.alpha_blend(plain,obj,box,alpha)
 			yield path,plain,mask
 
 
@@ -204,8 +214,8 @@ class ObjectOverBackgroundSet(ObjectSet):
 			yield path,img,mask
 
 if __name__ == '__main__':
-	ob = ObjectOverBackgroundSet("dataset",'src/cursor.png',
-					['src/skystone.png','src/background.jpg'],
-					resize=(20,20))
+	ob = ObjectOverPlainSet(name="dataset"
+							,obj=['src/cursor.png','src/skystone.png']
+							,resize=(20,20))
 	ob.cleanup()
 	ob.generate((500,500),10)
