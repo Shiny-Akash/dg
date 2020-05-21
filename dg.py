@@ -34,7 +34,7 @@ class DataSetGenerator:
 		self.create_json()
 		for path,img,mask in self.gen():
 			cv2.imwrite(path,img)
-			if mask.any() :
+			if type(mask) != bool:
 				*p,id_=path.split('/')
 				cv2.imwrite(f"{self.name}/masks/{id_}",
 							mask)
@@ -69,8 +69,9 @@ class DataSetGenerator:
 				'img_path':self.img_paths,
 				'bg':self.bgs}
 		if hasattr(self,'bbox'):
-			data['masks'] = self.masks
 			data['bbox'] = self.bbox
+		if hasattr(self,'masks'):
+			data['masks'] = self.masks
 		with open(f'{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
 
@@ -117,7 +118,8 @@ class ObjectSet(DataSetGenerator):
 	and object over some backgrounds
 	"""
 	def __init__(self,name,obj,resize=None,
-							bg_colour=None):
+							bg_colour=None,
+							mask_required=False):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
 		super().__init__(name,bg_colour=bg_colour)
@@ -137,7 +139,8 @@ class ObjectSet(DataSetGenerator):
 							dtype=np.uint8)*255	
 			self.alphas.append(alpha)
 		self.bbox = []
-		self.masks = []
+		if mask_required :
+			self.masks = []
 
 	def create_list(self):
 		"""create bbox list"""
@@ -160,10 +163,13 @@ class ObjectSet(DataSetGenerator):
 								* (1-alpha/255.0)
 								+ obj[:,:,i]
 								* (alpha/255.0))
-		mask = np.zeros((3,self.h,self.w),dtype=np.uint8)
-		mask[1,y:y+h,x:x+w] = alpha/255
-		mask[0] = cv2.bitwise_not(mask[1])/255
-		mask = mask.transpose((1,2,0))
+		if hasattr(self,'masks'):
+			mask = np.zeros((3,self.h,self.w),dtype=np.uint8)
+			mask[1,y:y+h,x:x+w] = alpha/255
+			mask[0] = cv2.bitwise_not(mask[1])/255
+			mask = mask.transpose((1,2,0))
+		else : 
+			mask =  False
 		return img,mask
 
 
@@ -184,9 +190,9 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 class ObjectOverBackgroundSet(ObjectSet):
-	def __init__(self,name,obj,bg,resize=None):
+	def __init__(self,name,obj,bg,mask_required=None,resize=None):
 		"""get the background """
-		super().__init__(name,obj,resize=resize)
+		super().__init__(name,obj,resize=resize,mask_required=mask_required)
 		self.bg = bg
 		if isinstance(bg,str):
 			self.background = [cv2.imread(bg)]
