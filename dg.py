@@ -200,11 +200,11 @@ class ObjectOverBackgroundSet(ObjectSet):
 		super().__init__(name,obj,resize=resize,mask_required=mask_required)
 		self.bg = bg
 		if isinstance(bg,str):
-			self.background = [cv2.imread(bg)]
+			self.background = [bg]
 		else :
 			self.background = []
 			for img in bg:
-				self.background.append(cv2.imread(img))
+				self.background.append(img)
 
 	def create_list(self):
 		"""create a background list"""
@@ -220,7 +220,7 @@ class ObjectOverBackgroundSet(ObjectSet):
 		for path,bg_idx,bbox in zip(self.img_paths,
 									self.bgs,
 									self.bbox):
-			img = self.background[bg_idx]
+			img = cv2.imread(self.background[bg_idx])
 			for alpha,obj,box in zip(self.alphas,self.objects,bbox):
 				img,mask = self.alpha_blend(img,obj,box,alpha)
 			yield path,img,mask
