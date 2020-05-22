@@ -2,6 +2,7 @@
 import os 
 import cv2
 import json
+import time
 import shutil
 import random
 import numpy as np
@@ -32,12 +33,16 @@ class DataSetGenerator:
 		self.make_path()
 		self.create_list()
 		self.create_json()
-		for path,img,mask in self.gen():
+		t = time.time()
+		for i,(path,img,mask) in enumerate(self.gen()):
 			cv2.imwrite(path,img)
 			if type(mask) != bool:
 				*p,id_=path.split('/')
 				cv2.imwrite(f"{self.name}/masks/{id_}",
 							mask)
+			print("[Done {:6d}]   [Time:   {:.2f} s]"
+				.format(i,time.time()-t))
+			t = time.time()
 
 	def make_path(self):
 		"""
@@ -190,7 +195,7 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 class ObjectOverBackgroundSet(ObjectSet):
-	def __init__(self,name,obj,bg,mask_required=None,resize=None):
+	def __init__(self,name,obj,bg,mask_required=False,resize=None):
 		"""get the background """
 		super().__init__(name,obj,resize=resize,mask_required=mask_required)
 		self.bg = bg
