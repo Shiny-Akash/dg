@@ -12,13 +12,17 @@ class DataSetGenerator:
 	this is the main class from which many
 	subclasses are derived .
 	"""
-	def __init__(self,name,bg_colour=None):
+	def __init__(self,name,save_path='',bg_colour=None,prints=False):
 		"""
 		basic attributes and functions that
 		has to initialized for every dataset
 		class .
 		"""
 		self.name = name
+		if not save_path.endswith('/') and save_path != '':
+			save_path = save_path+'/'
+		self.save_path = save_path
+		self.print = prints
 		self.ids = []
 		self.img_paths = []
 		self.bgs = []
@@ -38,21 +42,22 @@ class DataSetGenerator:
 			cv2.imwrite(path,img)
 			if type(mask) != bool:
 				*p,id_=path.split('/')
-				cv2.imwrite(f"{self.name}/masks/{id_}",
+				cv2.imwrite(f"{self.save_path}{self.name}/masks/{id_}",
 							mask)
-			print("[Done {:6d}]   [Time:   {:.2f} s]"
-				.format(i,time.time()-t))
-			t = time.time()
+			if self.print:
+				print("[Done {:6d}]   [Time:   {:.2f} s]"
+					.format(i,time.time()-t))
+				t = time.time()
 
 	def make_path(self):
 		"""
 		create default directories for storing the
 		dataset csv file and the images .
 		"""
-		folders = [f'{self.name}/json/',
-					f'{self.name}/images/']
+		folders = [f'{self.save_path}{self.name}/json/',
+					f'{self.save_path}{self.name}/images/']
 		if hasattr(self,'masks'):
-			folders.append(f'{self.name}/masks/')
+			folders.append(f'{self.save_path}{self.name}/masks/')
 		for folder in folders:
 			if not os.path.exists(folder):
 				os.makedirs(folder)
@@ -63,10 +68,10 @@ class DataSetGenerator:
 			id_ = random.randint(10000,99999)
 			self.ids.append(id_)
 			self.img_paths.append(
-				f"{self.name}/images/{id_}.png")
+				f"{self.save_path}{self.name}/images/{id_}.png")
 			if hasattr(self,'masks'):
 				self.masks.append(
-				f"{self.name}/masks/{id_}.png")
+				f"{self.save_path}{self.name}/masks/{id_}.png")
 
 	def create_json(self):
 		"""create json file to store ids,paths and bgs"""
@@ -77,19 +82,19 @@ class DataSetGenerator:
 			data['bbox'] = self.bbox
 		if hasattr(self,'masks'):
 			data['masks'] = self.masks
-		with open(f'{self.name}/json/images_info.json','w')as f:
+		with open(f'{self.save_path}{self.name}/json/images_info.json','w')as f:
 			json.dump(data, f)
 
 	def cleanup(self):
 		"""delete already existing dataset"""
-		if os.path.exists(f'{self.name}'):
-			shutil.rmtree(f'{self.name}')
+		if os.path.exists(f'{self.save_path}{self.name}'):
+			shutil.rmtree(f'{self.save_path}{self.name}')
 
 
 class PlainSet(DataSetGenerator):
 	"""a plain images dataset generator"""
-	def __init__(self,name,bg_colour=None):
-		super().__init__(name)
+	def __init__(self,name,bg_colour=None,save_path='',prints=False):
+		super().__init__(name,save_path=save_path,prints=prints)
 		self.bg = bg_colour
 
 	def gen(self):
@@ -124,10 +129,16 @@ class ObjectSet(DataSetGenerator):
 	"""
 	def __init__(self,name,obj,resize=None,
 							bg_colour=None,
-							mask_required=False):
+							mask_required=False,
+							save_path='',
+							prints=False):
 		"""get the object image"""
 		#add bg to the arguement bcoz of mro
-		super().__init__(name,bg_colour=bg_colour)
+		super().__init__(name,
+						bg_colour=bg_colour,
+						save_path=save_path,
+						prints=prints)
+
 		if isinstance(obj,str):
 			self.objects = [cv2.imread(obj,-1)]
 		else:
@@ -195,9 +206,17 @@ class ObjectOverPlainSet(ObjectSet,PlainSet):
 
 
 class ObjectOverBackgroundSet(ObjectSet):
-	def __init__(self,name,obj,bg,mask_required=False,resize=None):
+	def __init__(self,name,obj,
+				bg,mask_required=False,
+				resize=None,
+				save_path='',
+				prints=False):
 		"""get the background """
-		super().__init__(name,obj,resize=resize,mask_required=mask_required)
+		super().__init__(name,obj,
+						resize=resize,
+						mask_required=mask_required,
+						save_path=save_path,
+						prints=prints)
 		self.bg = bg
 		if isinstance(bg,str):
 			self.background = [bg]
@@ -229,6 +248,8 @@ if __name__ == '__main__':
 	ob = ObjectOverBackgroundSet(name="dataset"
 							,obj=['src/cursor.png','src/skystone.png']
 							,bg=['src/skystone.png']
-							,resize=(20,20))
+							,resize=(20,20),
+							prints=True,
+							save_path='/home/akash/Desktop')
 	ob.cleanup()
 	ob.generate((500,500),10)
