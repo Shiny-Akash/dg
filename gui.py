@@ -1,6 +1,6 @@
 import tkinter as tk
 
-class DGapp:
+class BaseApp:
 	def __init__(self,
 				generate_button_callback=None,
 				):
@@ -57,12 +57,17 @@ class DGapp:
 							bd=5,
 							font=10,
 							relief=tk.GROOVE)
-		self.typeofdataset_entry = tk.Entry(
-							master=self.content_frame,
-							relief=tk.RIDGE,
-							bd=5,
-							font=10,
+
+		dataset_list = ['PlainSet','ObjectOverPlainSet','ObjectOverBackgroundSet']
+		self.d_var = tk.StringVar(self.content_frame)
+		self.d_var.set(dataset_list[0])
+		self.typeofdataset_opt = tk.OptionMenu(
+							self.content_frame,
+							self.d_var,
+							*dataset_list,
 							)
+		self.typeofdataset_opt.configure(font=10)
+		
 		self.count_lbl = tk.Label(
 							master=self.content_frame,
 							text='Count :',
@@ -104,7 +109,7 @@ class DGapp:
 
 		self.content_frame.grid(row=1,sticky='nsew')
 		self.typeofdataset_lbl.grid(row=0,column=0,sticky='e')
-		self.typeofdataset_entry.grid(row=0,column=1,sticky='w',padx=10)
+		self.typeofdataset_opt.grid(row=0,column=1,sticky='w',padx=10)
 		self.count_lbl.grid(row=1,column=0,sticky='e')
 		self.count_entry.grid(row=1,column=1,sticky='w',padx=10)
 		self.size_lbl.grid(row=2,column=0,sticky='e')
@@ -115,5 +120,5 @@ class DGapp:
 		self.window.mainloop()
 
 if __name__ == '__main__':
-	app = DGapp()
+	app = BaseApp()
 	app.run()
