@@ -245,11 +245,14 @@ class ObjectOverBackgroundSet(ObjectSet):
 			yield path,img,mask
 
 if __name__ == '__main__':
-	ob = ObjectOverBackgroundSet(name="dataset"
-							,obj=['src/cursor.png','src/skystone.png']
-							,bg=['src/skystone.png']
-							,resize=(20,20),
-							prints=True,
-							save_path='/home/akash/Desktop')
+	ob = ObjectOverBackgroundSet(
+					name="dataset",
+					obj=['src/cursor.png','src/skystone.png'],
+					bg=['src/skystone.png'],
+					resize=(20,20),
+					prints=True,
+					save_path='/home/akash/Desktop',
+					)
 	ob.cleanup()
-	ob.generate((500,500),10)
+	ob.generate(size=(500,500),
+				count=10)
