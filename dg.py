@@ -40,7 +40,7 @@ class DataSetGenerator:
 		t = time.time()
 		for i,(path,img,mask) in enumerate(self.gen()):
 			cv2.imwrite(path,img)
-			if type(mask) != bool:
+			if mask:
 				*p,id_=path.split('/')
 				cv2.imwrite(f"{self.save_path}{self.name}/masks/{id_}",
 							mask)
