@@ -7,3 +7,11 @@ modifications to the existing classes . But the former
 requires a new class I think .
 
 ##
+10/06/2020 --
+	todo : add next button and extra pages for more options 
+
+11/06/2020 --
+	did : added next frame and made it functional and final frame 
+    not yet functional .
+
+	todo : make final frame functional by modifying the app.py and getting the value to print from the dg .
