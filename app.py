@@ -1,5 +1,6 @@
 from gui import BaseApp
 import dg
+import time
 
 class DGapp(BaseApp):
 	def __init__(self):
@@ -8,6 +9,7 @@ class DGapp(BaseApp):
 						)
 
 	def generate(self):
+		super().generate()
 		self.dataset = self.get_dg(self.d_var.get())
 		count = self.count_entry.get()
 		size = self.sizex_entry.get(),self.sizey_entry.get()
@@ -16,20 +18,46 @@ class DGapp(BaseApp):
 			size = int(size[0]),int(size[1])
 			self.dataset.cleanup()
 			self.dataset.generate(count=count, size=size)
-			print('done')
+			self.t_var.set('Done')
+			self.window.after(1000,self.back)
 		else : 
-			print('Please enter correct values')
+			self.back()
+			return
 
 	def get_dg(self,t):
-		datasets = {
-				'PlainSet':dg.PlainSet,
-				'ObjectOverPlainSet':dg.ObjectOverPlainSet,
-				'ObjectOverBackgroundSet':dg.ObjectOverBackgroundSet,
-				}
-		d = datasets.get(t)
 		name = self.name_entry.get()
 		save_path = self.savepath_entry.get()
-		return d(name=name,save_path=save_path)
+		obj = self.obj_entry.get().split(',')
+		bg = self.bg_entry.get().split(',')
+		if bg == '':
+			bg = None
+		resize = self.resize_entry.get()
+		if resize == '':
+			resize = None
+		else :
+			resize.replace('(','')
+			resize = resize.split(',')
+			resize = int(resize[0]),int(resize[1]) 
+		if t == 'PlainSet' :
+			return dg.PlainSet(
+							name=name,
+							save_path=save_path,
+							)
+		if t == 'ObjectOverPlainSet' :
+			return dg.ObjectOverPlainSet(
+							name=name,
+							save_path=save_path,
+							obj=obj,
+							resize=resize,
+							)
+		if t == 'ObjectOverBackgroundSet' :
+			return dg.ObjectOverBackgroundSet(
+							name=name,
+							save_path=save_path,
+							obj=obj,
+							bg=bg,
+							resize=resize,
+							)
 
 	def clean(self):
 		self.dataset = self.get_dg(self.d_var.get())

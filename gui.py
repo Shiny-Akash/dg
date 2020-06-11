@@ -61,9 +61,12 @@ class BaseApp:
 			self.next_frame.columnconfigure(i,weight=1)	
 
 		# final frame
-		nrows = 2
+		nrows = 1
 		for i in range(0,nrows):
 			self.final_frame.rowconfigure(i,weight=1) 	
+		ncolumns = 1 # number of columns
+		for i in range(0,ncolumns):
+			self.final_frame.columnconfigure(i,weight=1)
 
 	def widgets(self):
 		# widgets in title frame
@@ -236,17 +239,15 @@ class BaseApp:
 							font=10,
 							)
 		# final frame
+		self.t_var = tk.StringVar()
+		self.t_var.set('Generating......')
 		self.generating_lbl = tk.Label(
 							master=self.final_frame,
-							text='Generating Dataset ...',
+							textvariable=self.t_var,
 							bd=10,
 							font=10,
-							relief=tk.GROOVE,
-							)
-		self.processing_lbl = tk.Label(
-							master=self.final_frame,
-							text=f'0/{self.count_entry.get()}',
-							font=10,
+							bg='yellow',
+							fg='red',
 							)
 
 	def packing(self):
@@ -292,9 +293,11 @@ class BaseApp:
 
 	def final_frame_pack(self):
 		self.final_frame.grid(row=1,sticky='nsew')
-
 		self.generating_lbl.grid(row=0)
-		self.processing_lbl.grid(row=1)
+
+	def generate(self):
+		self.next_frame.grid_forget()
+		self.final_frame_pack()
 
 	def next(self):
 		self.content_frame.grid_forget()
@@ -302,6 +305,7 @@ class BaseApp:
 
 	def back(self):
 		self.next_frame.grid_forget()
+		self.final_frame.grid_forget()
 		self.content_frame_pack()
 
 	def run(self):
