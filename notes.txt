@@ -12,6 +12,6 @@ requires a new class I think .
 
 11/06/2020 --
 	did : added next frame and made it functional and final frame 
-    not yet functional .
+    not yet functional . 
 
-	todo : make final frame functional by modifying the app.py and getting the value to print from the dg .
+    todo : use pyinstaller to create an exe file . other works are finished more or less.

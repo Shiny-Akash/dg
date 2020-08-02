@@ -1,3 +1,6 @@
 __pycache__
 dataset
 src
+build
+dist
+datasetgenerator.spec
