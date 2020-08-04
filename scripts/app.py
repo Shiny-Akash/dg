@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+"""integrate the dg script and gui"""
+
 from gui import BaseApp
 import dg
 import time

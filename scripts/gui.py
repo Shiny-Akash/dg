@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+"""build a basic gui for the app"""
+
 import tkinter as tk
 
 class BaseApp:

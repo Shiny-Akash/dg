@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 """dg - Dataset Generator"""
+
 import os
 import cv2
 import json
@@ -251,28 +254,12 @@ class ObjectOverBackgroundSet(ObjectSet):
 
 if __name__ == "__main__":
 
-    path = glob.glob("/media/akash/AKASH/training/*.png")
+    object_paths = ['../samples/object1.png', '../samples/object2.png']
+    background_path = '../samples/background.jpg'
     ob = ObjectOverBackgroundSet(
-        name="train",
-        obj=[
-            "/home/akash/Downloads/red (1).png",
-            "/home/akash/Downloads/cursor (1).png",
-        ],
-        bg=path,
-        resize=(20, 20),
-        prints=True,
-    )
-    ob.cleanup()
-    ob.generate(size=(500, 500), count=10)
-
-    path = glob.glob("/media/akash/AKASH/testing/*.png")
-    ob = ObjectOverBackgroundSet(
-        name="val",
-        obj=[
-            "/home/akash/Downloads/red (1).png",
-            "/home/akash/Downloads/cursor (1).png",
-        ],
-        bg=path,
+        name="dataset",
+        obj=object_paths,
+        bg=background_path,
         resize=(20, 20),
         prints=True,
     )
